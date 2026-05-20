@@ -28,7 +28,7 @@ X_POSITION = 1024
 
 ctk.set_appearance_mode("dark")
 
-class RightVendoApp(ctk.CTk):
+class RightVendoGUI(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.geometry(f"{config.SCREEN_WIDTH}x{config.SCREEN_HEIGHT}+{X_POSITION}+0")
@@ -118,7 +118,7 @@ class RightVendoApp(ctk.CTk):
                 self.cleanup_and_reset()
                 return
 
-            self.safe_update_ui("VERIFYING", "Fetching details from database...", config.COLORS["warning"])
+            self.safe_update_ui("Verifying QR Code, please wait...", config.COLORS["warning"])
             user_data = fetch_attendee(qr_id)
             
             if not user_data or 'face_encoding' not in user_data:
@@ -130,7 +130,7 @@ class RightVendoApp(ctk.CTk):
             user_type = user_data.get('role', 'Attendee').capitalize()
             registered_encoding = np.array(user_data['face_encoding'])
             
-            self.safe_update_ui("MATCH FOUND", f"Hello, {user_name}!", config.COLORS["success"])
+            self.safe_update_ui("Welcome", f"{user_name}!", config.COLORS["success"])
             time.sleep(1.5)
             
             self.safe_update_ui("FACE SCAN", "Please look directly at the camera", config.COLORS["scan"])
@@ -156,7 +156,7 @@ class RightVendoApp(ctk.CTk):
                 self.cleanup_and_reset()
                 return
 
-            self.safe_update_ui("VERIFIED", "Checking stock inventory...", config.COLORS["success"])
+            self.safe_update_ui("Face Verification Complete", config.COLORS["success"])
             time.sleep(1.5)
 
             target_slot = get_available_slot(user_type)
@@ -165,11 +165,10 @@ class RightVendoApp(ctk.CTk):
                 self.cleanup_and_reset()
                 return
 
-            self.safe_update_ui("DISPENSING", f"Dropping item from Slot {target_slot}...", config.COLORS["success"])
+            self.safe_update_ui(f"Dropping item from Slot {target_slot}...", config.COLORS["success"])
             
-            # ? TAMA NA ANG TAWAG: 'hardware' ang nautusan!
             hardware.dispense_item(target_slot)
-            hardware.print_id_sticker(user_name, user_data.get('company', 'N/A'))
+            hardware.print_id_sticker(user_name, user_data.get('company', ''))
 
             time.sleep(4)
             self.safe_update_ui("SUCCESS", "Thank you! Please claim your item below.", config.COLORS["success"])
@@ -190,5 +189,5 @@ class RightVendoApp(ctk.CTk):
         sys.exit(0)
 
 if __name__ == "__main__":
-    app = RightVendoApp()
+    app = RightVendoGUI()
     app.mainloop()
