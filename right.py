@@ -38,6 +38,8 @@ class LeftVendoApp(ctk.CTk):
         
         self.ui = VendoUI(self)
         self.ui.show_idle_view()  # Start with beautiful Idle View
+        current_event_name = get_active_event_name()
+        self.ui.update_event_name(current_event_name)
 
         self.is_processing = False
         self.camera_active = False
