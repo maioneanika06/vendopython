@@ -5,7 +5,7 @@
 # ==========================================
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 768
-EVENT_NAME = "VENDY TECH EVENT"
+EVENT_NAME = "Connecting to database.."
 
 # --- VENDY WEB APP THEME ---
 COLORS = {

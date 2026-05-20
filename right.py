@@ -17,13 +17,13 @@ from pyzbar.pyzbar import decode
 import arduino
 import config
 from gui import VendoUI
-from modules.database import fetch_attendee, get_available_slot
+from modules.database import fetch_attendee, get_active_event_name, get_available_slot
 
 SIDE_NAME = "RIGHT"
 CAM_INDEX = 2
 BTN_PIN = 22      
 X_POSITION = 1024
-
+10
 ctk.set_appearance_mode("dark")
 
 try: arduino = serial.Serial('/dev/ttyACM0', 9600, timeout=2)

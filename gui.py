@@ -23,14 +23,14 @@ class VendoUI(ctk.CTkFrame):
         """Creates the beautiful centered Idle/Standby View"""
         idle_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         
-        # --- EVENT NAME LABEL ---
-        event_label = ctk.CTkLabel(
+        # --- EVENT NAME LABEL (Dito natin nilagyan ng self.) ---
+        self.event_label = ctk.CTkLabel(
             idle_frame,
-            text=f"◆ {config.EVENT_NAME} ◆",
+            text=f"{config.EVENT_NAME}",
             font=config.FONTS["event_name"],
             text_color=config.COLORS["accent_light"]
         )
-        event_label.pack(pady=(80, 40))
+        self.event_label.pack(pady=(80, 40))
         
         # --- WELCOME TEXT (Huge, centered) ---
         welcome_label = ctk.CTkLabel(
@@ -52,6 +52,7 @@ class VendoUI(ctk.CTkFrame):
         
         return idle_frame
     
+
     def _create_active_view(self):
         """Creates the Active View with camera and status indicators"""
         active_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
@@ -113,7 +114,14 @@ class VendoUI(ctk.CTkFrame):
         # Show active view
         self.active_view.pack(fill="both", expand=True)
     
-    # Functions para tawagin ng main code natin
+    # ==================================================
+    # ??? MGA FUNCTIONS PARA MA-CONTROL NG MAIN CODE
+    # ==================================================
+    
+    def update_event_name(self, new_name):
+        """Update ang pangalan ng event mula sa Database"""
+        self.event_label.configure(text=f"{new_name}")
+
     def update_texts(self, status, msg, color):
         """Update status and message text in Active View"""
         self.status_label.configure(text=status, text_color=color)

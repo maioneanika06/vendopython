@@ -50,7 +50,7 @@ def get_active_event_name():
     try:
         # Palitan mo yung 'events', 'status', 'LIVE', at 'name' depende 
         # sa totoong pangalan ng mga columns sa Supabase table niyo.
-        response = supabase.table('events').select('name').eq('status', 'LIVE').execute()
+        response = supabase.table('events').select('name').eq('status', 'ACTIVE').execute()
         
         if response.data and len(response.data) > 0:
             return response.data[0]['name'].upper() # Para laging naka-caps lock sa screen
