@@ -1,4 +1,6 @@
 import os
+
+from left import LeftVendoApp
 os.environ["QT_QPA_PLATFORM"] = "xcb" 
 
 import cv2
@@ -14,22 +16,19 @@ import customtkinter as ctk
 from PIL import Image
 from gpiozero import Button
 from pyzbar.pyzbar import decode
-import arduino
+import hardware
 import config
 from gui import VendoUI
 from modules.database import fetch_attendee, get_active_event_name, get_available_slot
 
 SIDE_NAME = "RIGHT"
 CAM_INDEX = 2
-BTN_PIN = 22      
+BTN_PIN = 23   
 X_POSITION = 1024
-10
+
 ctk.set_appearance_mode("dark")
 
-try: arduino = serial.Serial('/dev/ttyACM0', 9600, timeout=2)
-except: arduino = None
-
-class LeftVendoApp(ctk.CTk):
+class RightVendoApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.geometry(f"{config.SCREEN_WIDTH}x{config.SCREEN_HEIGHT}+{X_POSITION}+0")
@@ -138,7 +137,7 @@ class LeftVendoApp(ctk.CTk):
             face_matched = False
             start_time = time.time()
             
-            while time.time() - start_time < 20:
+            while time.time() - start_time < 8:
                 if self.current_frame is not None:
                     rgb_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB)
                     small_frame = cv2.resize(rgb_frame, (0, 0), fx=0.5, fy=0.5)
@@ -160,7 +159,6 @@ class LeftVendoApp(ctk.CTk):
             self.safe_update_ui("VERIFIED", "Checking stock inventory...", config.COLORS["success"])
             time.sleep(1.5)
 
-            # ?? ITO YUNG NAWAWALA MONG LINYA KANINA ??
             target_slot = get_available_slot(user_type)
             if not target_slot:
                 self.safe_update_ui("OUT OF STOCK", f"No items left for {user_type.upper()}", config.COLORS["error"])
@@ -169,9 +167,9 @@ class LeftVendoApp(ctk.CTk):
 
             self.safe_update_ui("DISPENSING", f"Dropping item from Slot {target_slot}...", config.COLORS["success"])
             
-            # TAWAGIN ANG HARDWARE
-            arduino.dispense_item(target_slot)
-            arduino.print_id_sticker(user_name, user_data.get('company', 'N/A'))
+            # ? TAMA NA ANG TAWAG: 'hardware' ang nautusan!
+            hardware.dispense_item(target_slot)
+            hardware.print_id_sticker(user_name, user_data.get('company', 'N/A'))
 
             time.sleep(4)
             self.safe_update_ui("SUCCESS", "Thank you! Please claim your item below.", config.COLORS["success"])
@@ -192,5 +190,5 @@ class LeftVendoApp(ctk.CTk):
         sys.exit(0)
 
 if __name__ == "__main__":
-    app = LeftVendoApp()
-    app.mainloop()    
+    app = RightVendoApp()
+    app.mainloop()

@@ -14,20 +14,17 @@ import customtkinter as ctk
 from PIL import Image
 from gpiozero import Button
 from pyzbar.pyzbar import decode
-import arduino
+import hardware
 import config
 from gui import VendoUI
 from modules.database import fetch_attendee, get_active_event_name, get_available_slot
 
 SIDE_NAME = "LEFT"
 CAM_INDEX = 0
-BTN_PIN = 23      
+BTN_PIN = 22
 X_POSITION = 0
 
 ctk.set_appearance_mode("dark")
-
-try: arduino = serial.Serial('/dev/ttyACM0', 9600, timeout=2)
-except: arduino = None
 
 class LeftVendoApp(ctk.CTk):
     def __init__(self):
@@ -160,7 +157,6 @@ class LeftVendoApp(ctk.CTk):
             self.safe_update_ui("VERIFIED", "Checking stock inventory...", config.COLORS["success"])
             time.sleep(1.5)
 
-            # ?? ITO YUNG NAWAWALA MONG LINYA KANINA ??
             target_slot = get_available_slot(user_type)
             if not target_slot:
                 self.safe_update_ui("OUT OF STOCK", f"No items left for {user_type.upper()}", config.COLORS["error"])
@@ -169,9 +165,9 @@ class LeftVendoApp(ctk.CTk):
 
             self.safe_update_ui("DISPENSING", f"Dropping item from Slot {target_slot}...", config.COLORS["success"])
             
-            # TAWAGIN ANG HARDWARE
-            arduino.dispense_item(target_slot)
-            arduino.print_id_sticker(user_name, user_data.get('company', 'N/A'))
+            # ? TAMA NA ANG TAWAG: 'hardware' ang nautusan!
+            hardware.dispense_item(target_slot)
+            hardware.print_id_sticker(user_name, user_data.get('company', 'N/A'))
 
             time.sleep(4)
             self.safe_update_ui("SUCCESS", "Thank you! Please claim your item below.", config.COLORS["success"])
@@ -193,5 +189,5 @@ class LeftVendoApp(ctk.CTk):
 
 if __name__ == "__main__":
     app = LeftVendoApp()
-    app.mainloop()       
-    
+    app.mainloop()
+            
