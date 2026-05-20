@@ -37,6 +37,7 @@ class LeftVendoApp(ctk.CTk):
         self.attributes('-fullscreen', True)
         
         self.ui = VendoUI(self)
+        self.ui.show_idle_view()  # Start with beautiful Idle View
 
         self.is_processing = False
         self.camera_active = False
@@ -64,6 +65,7 @@ class LeftVendoApp(ctk.CTk):
         def toggle_cam():
             self.camera_active = is_active
             if is_active:
+                self.ui.show_active_view()  # Show camera and status when active
                 self.cap = cv2.VideoCapture(CAM_INDEX)
             else:
                 if self.cap:
@@ -180,7 +182,7 @@ class LeftVendoApp(ctk.CTk):
     def cleanup_and_reset(self):
         self.safe_set_camera_state(False)
         time.sleep(1)
-        self.safe_update_ui("STANDBY", "Press the physical button to start scanning", config.COLORS["idle"])
+        self.ui.show_idle_view()  # Return to beautiful Idle View
         self.is_processing = False
 
     def close_app(self, event=None):
