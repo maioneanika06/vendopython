@@ -41,3 +41,22 @@ def get_available_slot(attendee_type):
     except Exception as e:
         print(f"Inventory DB Error: {e}")
         return None
+
+def get_active_event_name():
+    """
+    Kukuha ng pangalan ng event na naka 'LIVE' o 'ACTIVE' sa Supabase.
+    Kung walang makuha o walang internet, may default fallback text.
+    """
+    try:
+        # Palitan mo yung 'events', 'status', 'LIVE', at 'name' depende 
+        # sa totoong pangalan ng mga columns sa Supabase table niyo.
+        response = supabase.table('events').select('name').eq('status', 'LIVE').execute()
+        
+        if response.data and len(response.data) > 0:
+            return response.data[0]['name'].upper() # Para laging naka-caps lock sa screen
+        else:
+            return "WELCOME TO VENDY" # Fallback kung walang active event
+            
+    except Exception as e:
+        print(f"[DB ERROR] Could not fetch event name: {e}")
+        return "WELCOME TO VENDY" # Fallback kung walang internet
