@@ -20,7 +20,7 @@ from gui import VendoUI
 from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot, mark_attendee_claimed, normalize_inventory_role
 
 SIDE_NAME = "RIGHT"
-CAM_INDEX = 2
+CAM_INDEX = 0
 BTN_PIN = 23
 X_POSITION = 1024
 
@@ -110,7 +110,7 @@ class RightVendoGUI(ctk.CTk):
             start_time = time.time()
             time.sleep(1) 
             
-            while time.time() - start_time < 30:
+            while time.time() - start_time < 60:
                 if self.current_frame is not None:
                     gray = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2GRAY)
                     barcodes = decode(gray)
@@ -143,7 +143,7 @@ class RightVendoGUI(ctk.CTk):
             face_matched = False
             start_time = time.time()
             
-            while time.time() - start_time < 20:
+            while time.time() - start_time < 60:
                 if self.current_frame is not None:
                     rgb_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB)
                     small_frame = cv2.resize(rgb_frame, (0, 0), fx=0.5, fy=0.5)
