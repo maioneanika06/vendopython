@@ -108,7 +108,7 @@ class LeftVendoGUI(ctk.CTk):
             start_time = time.time()
             time.sleep(1) 
             
-            while time.time() - start_time < 10:
+            while time.time() - start_time < 30:
                 if self.current_frame is not None:
                     gray = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2GRAY)
                     barcodes = decode(gray)
@@ -141,7 +141,7 @@ class LeftVendoGUI(ctk.CTk):
             face_matched = False
             start_time = time.time()
             
-            while time.time() - start_time < 8:
+            while time.time() - start_time < 20:
                 if self.current_frame is not None:
                     rgb_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB)
                     small_frame = cv2.resize(rgb_frame, (0, 0), fx=0.5, fy=0.5)
@@ -179,7 +179,8 @@ class LeftVendoGUI(ctk.CTk):
 
             deduct_inventory(target_slot)
             mark_attendee_claimed(user_data['id'])
-            hardware.print_id_sticker(user_name, user_data.get('company', ''))
+            print_success = hardware.print_id_sticker(user_name, user_data.get('company', ''))
+            print(f"[{SIDE_NAME}] Sticker print success: {print_success}")
 
             time.sleep(4)
             self.safe_update_ui("SUCCESS", "Thank you! Please claim your item below.", config.COLORS["success"])

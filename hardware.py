@@ -1,5 +1,7 @@
 import serial
 import time
+import usb.core
+import usb.util
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -75,28 +77,48 @@ def print_id_sticker(user_name, company_name):
     print(f"[PRINTER] Printing sticker for {user_name}...")
     
     try:
-        # ?? KUNG GAGAMIT KAYO NG ESC/POS PRINTER, HETO ANG STANDARD CODE:
-        # (Palitan ang 0x04b8 at 0x0202 ng mismong USB Vendor ID at Product ID ng printer niyo)
-        
-        """
-        p = Usb(0x04b8, 0x0202, 0, 0x81, 0x01)
-        
-        # Design ng Sticker
-        p.set(align='center', text_type='B', width=2, height=2)
-        p.text("VENDY EVENT 2026\n\n")
-        
-        p.set(align='center', text_type='B', width=3, height=3)
-        p.text(f"{user_name}\n") # Pangalan ng Attendee
-        
-        p.set(align='center', text_type='normal', width=1, height=1)
-        p.text(f"{company_name}\n\n") # Company o Role
-        
-        p.cut()
-        print("[PRINTER] Success!")
-        """
-        
-        # ?? KUNG MAY LUMA KAYONG CODE PARA SA PRINTER KAGABI, I-PASTE MO DITO PABABA!
-        pass 
+        print("[PRINTER] Looking for USB sticker printer 2e3c:5750...")
+        printer_dev = usb.core.find(idVendor=0x2e3c, idProduct=0x5750)
+        if not printer_dev:
+            print("[PRINTER ERROR] USB sticker printer not found.")
+            return False
+
+        if printer_dev.is_kernel_driver_active(0):
+            print("[PRINTER] Detaching kernel driver from USB interface 0...")
+            printer_dev.detach_kernel_driver(0)
+
+        print("[PRINTER] Configuring USB printer...")
+        printer_dev.set_configuration()
+        cfg = printer_dev.get_active_configuration()
+        intf = cfg[(0, 0)]
+        endpoint = usb.util.find_descriptor(
+            intf,
+            custom_match=lambda ep: usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_OUT
+        )
+
+        if not endpoint:
+            print("[PRINTER ERROR] Printer USB OUT endpoint not found.")
+            return False
+
+        safe_name = str(user_name or "Attendee")[:18]
+        safe_company = str(company_name or "N/A")[:18]
+        tspl_cmd = (
+            "\r\n"
+            "SIZE 40 mm,30 mm\n"
+            "GAP 2 mm,0 mm\n"
+            "DIRECTION 0\n"
+            "CLS\n"
+            f'TEXT 20,40,"2",0,1,1,"{safe_name}"\n'
+            f'TEXT 20,110,"2",0,1,1,"{safe_company}"\n'
+            "PRINT 1\r\n"
+        )
+
+        print(f"[PRINTER] Sending sticker data: name='{safe_name}', company='{safe_company}'")
+        endpoint.write(tspl_cmd.encode('utf-8'))
+        usb.util.dispose_resources(printer_dev)
+        print("[PRINTER] Sticker print command sent.")
+        return True
 
     except Exception as e:
         print(f"[PRINTER ERROR] Hindi makapag-print: {e}")
+        return False
