@@ -21,7 +21,7 @@ from modules.database import deduct_inventory, fetch_attendee, get_active_event_
 
 SIDE_NAME = "LEFT"
 CAM_INDEX = 0
-BTN_PIN = 22
+BTN_PIN = 23
 X_POSITION = 0
 
 
