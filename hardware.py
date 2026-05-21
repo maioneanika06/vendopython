@@ -1,47 +1,68 @@
 import serial
 import time
+from contextlib import contextmanager
+from pathlib import Path
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
 # from escpos.printer import Usb  # ?? Tanggalin ang '#' kung gamit niyo ay standard ESC/POS USB Printer
 
 # ==========================================
 # ?? ARDUINO CONNECTION
 # ==========================================
-try:
-    arduino = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-    time.sleep(2) # Bigyan ng 2 seconds ang Arduino para mag-initialize
-    print("[HARDWARE] Arduino Connected Successfully.")
-except Exception as e:
-    print(f"[HARDWARE WARNING] Hindi ma-connect ang Arduino: {e}")
+ARDUINO_PORT = '/dev/ttyACM0'
+ARDUINO_BAUDRATE = 9600
+ARDUINO_LOCK_PATH = Path('/tmp/vendy_arduino.lock')
+
+@contextmanager
+def arduino_connection():
+    lock_file = ARDUINO_LOCK_PATH.open('a+')
     arduino = None
+
+    try:
+        if fcntl:
+            print("[HARDWARE] Waiting for Arduino dispense lock...")
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+
+        arduino = serial.Serial(ARDUINO_PORT, ARDUINO_BAUDRATE, timeout=1)
+        time.sleep(2) # Opening serial can reset the Arduino.
+        arduino.reset_input_buffer()
+        print("[HARDWARE] Arduino Connected Successfully.")
+        yield arduino
+    finally:
+        if arduino:
+            arduino.close()
+        if fcntl:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+        lock_file.close()
 
 # ==========================================
 # ?? DISPENSE LOGIC
 # ==========================================
 def dispense_item(target_slot):
     """Nagpapadala ng numero sa Arduino at naghihintay ng DONE confirmation."""
-    if not arduino:
-        print(f"[HARDWARE ERROR] Arduino not connected. Cannot confirm Slot {target_slot}.")
-        return False
-
     try:
-        command = f"{target_slot}\n"
-        arduino.reset_input_buffer()
-        arduino.write(command.encode('utf-8'))
-        arduino.flush()
-        print(f"[HARDWARE] Command sent: Dispensing Slot {target_slot}")
+        with arduino_connection() as arduino:
+            command = f"{target_slot}\n"
+            arduino.write(command.encode('utf-8'))
+            arduino.flush()
+            print(f"[HARDWARE] Command sent: Dispensing Slot {target_slot}")
 
-        deadline = time.monotonic() + 10
-        while time.monotonic() < deadline:
-            line = arduino.readline().decode('utf-8', errors='ignore').strip()
-            if not line:
-                continue
+            deadline = time.monotonic() + 10
+            while time.monotonic() < deadline:
+                line = arduino.readline().decode('utf-8', errors='ignore').strip()
+                if not line:
+                    continue
 
-            print(f"[HARDWARE] Arduino replied: {line}")
-            if line == "DONE":
-                print(f"[HARDWARE] Dispense confirmed for Slot {target_slot}.")
-                return True
+                print(f"[HARDWARE] Arduino replied: {line}")
+                if line == "DONE":
+                    print(f"[HARDWARE] Dispense confirmed for Slot {target_slot}.")
+                    return True
 
-        print(f"[HARDWARE ERROR] Timeout waiting for DONE from Arduino.")
-        return False
+            print(f"[HARDWARE ERROR] Timeout waiting for DONE from Arduino.")
+            return False
     except Exception as e:
         print(f"[HARDWARE ERROR] Dispense failed: {e}")
         return False
