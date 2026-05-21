@@ -5,6 +5,12 @@ URL = "https://zjumaqabzoogpoeadvtn.supabase.co"
 KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqdW1hcWFiem9vZ3BvZWFkdnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwODI0OTIsImV4cCI6MjA5NDY1ODQ5Mn0.L6gfpuC8rHH04RS6sOeSz6EPJqp6xaohRD-lRFkRzZU"
 supabase = create_client(URL, KEY)
 
+def normalize_inventory_role(role):
+    role = str(role or "Attendee").strip()
+    if role.upper() == "VIP":
+        return "VIP"
+    return role.capitalize()
+
 def fetch_attendee(search_id):
     try:
         # Kinukuha ang data sa 'attendees' table gamit ang QR code
@@ -44,6 +50,7 @@ def get_available_slot(user_type, side_name):
             print("[INVENTORY] No ACTIVE event found.")
             return None
 
+        assigned_role = normalize_inventory_role(user_type)
         side_name = side_name.upper()
         if side_name == "LEFT":
             allowed_slots = [1, 3, 5]
@@ -58,7 +65,7 @@ def get_available_slot(user_type, side_name):
         response = supabase.table('inventory') \
             .select('slot_number') \
             .eq('event_id', event_id) \
-            .eq('assigned_role', user_type) \
+            .eq('assigned_role', assigned_role) \
             .in_('slot_number', allowed_slots) \
             .gt('stock_count', 0) \
             .order('slot_number') \
@@ -68,6 +75,7 @@ def get_available_slot(user_type, side_name):
         if len(response.data) > 0:
             return str(response.data[0]['slot_number']) # Ibalik halimbawa: "1" o "6"
         else:
+            print(f"[INVENTORY] No available slot for role {assigned_role} on {side_name}.")
             return None
     except Exception as e:
         print(f"Inventory DB Error: {e}")

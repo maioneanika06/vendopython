@@ -17,7 +17,7 @@ from pyzbar.pyzbar import decode
 import hardware
 import config
 from gui import VendoUI
-from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot
+from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot, normalize_inventory_role
 
 SIDE_NAME = "LEFT"
 CAM_INDEX = 0
@@ -125,7 +125,7 @@ class LeftVendoGUI(ctk.CTk):
                 return
                 
             user_name = user_data.get('full_name', 'Attendee').upper()
-            user_type = user_data.get('role', 'Attendee').capitalize()
+            user_type = normalize_inventory_role(user_data.get('role', 'Attendee'))
             registered_encoding = np.array(user_data['face_encoding'])
             
             self.safe_update_ui("Welcome", f"{user_name}!", config.COLORS["success"])
