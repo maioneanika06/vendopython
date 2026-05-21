@@ -24,6 +24,8 @@ CAM_INDEX = 2
 BTN_PIN = 23   
 X_POSITION = 1024
 
+
+
 ctk.set_appearance_mode("dark")
 
 class RightVendoGUI(ctk.CTk):

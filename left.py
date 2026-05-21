@@ -24,6 +24,8 @@ CAM_INDEX = 0
 BTN_PIN = 22
 X_POSITION = 0
 
+
+
 ctk.set_appearance_mode("dark")
 
 class LeftVendoGUI(ctk.CTk):
