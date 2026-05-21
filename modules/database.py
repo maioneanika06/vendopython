@@ -46,9 +46,9 @@ def get_available_slot(user_type, side_name):
 
         side_name = side_name.upper()
         if side_name == "LEFT":
-            allowed_slots = [1, 2, 3]
+            allowed_slots = [1, 3, 5]
         elif side_name == "RIGHT":
-            allowed_slots = [4, 5, 6]
+            allowed_slots = [2, 4, 6]
         else:
             print(f"[INVENTORY] Unknown side_name: {side_name}")
             return None
