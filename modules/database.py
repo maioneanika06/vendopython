@@ -116,6 +116,23 @@ def deduct_inventory(slot_number):
         print(f"Inventory Deduction Error: {e}")
         return False
 
+def mark_attendee_claimed(attendee_id):
+    try:
+        response = supabase.table('attendees') \
+            .update({'claimed_status': 'Claimed'}) \
+            .eq('id', attendee_id) \
+            .execute()
+
+        if response.data:
+            print(f"[CLAIM] Attendee {attendee_id} marked as Claimed.")
+            return True
+
+        print(f"[CLAIM] No attendee updated for id {attendee_id}.")
+        return False
+    except Exception as e:
+        print(f"Claim Status Update Error: {e}")
+        return False
+
 def get_active_event_name():
     """
     Kukuha ng pangalan ng event na naka 'LIVE' o 'ACTIVE' sa Supabase.

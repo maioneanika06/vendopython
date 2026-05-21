@@ -17,7 +17,7 @@ from pyzbar.pyzbar import decode
 import hardware
 import config
 from gui import VendoUI
-from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot, normalize_inventory_role
+from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot, mark_attendee_claimed, normalize_inventory_role
 
 SIDE_NAME = "RIGHT"
 CAM_INDEX = 2
@@ -91,7 +91,10 @@ class RightVendoGUI(ctk.CTk):
         self.after(30, self.update_video_feed)
 
     def on_button_press(self):
-        if self.is_processing: return
+        if self.is_processing:
+            print(f"[{SIDE_NAME}] Button press ignored while vending sequence is active.")
+            return
+        print(f"[{SIDE_NAME}] Button press accepted.")
         self.is_processing = True
         threading.Thread(target=self.vending_sequence, daemon=True).start()
 
@@ -175,6 +178,7 @@ class RightVendoGUI(ctk.CTk):
                 return
 
             deduct_inventory(target_slot)
+            mark_attendee_claimed(user_data['id'])
             hardware.print_id_sticker(user_name, user_data.get('company', ''))
 
             time.sleep(4)
