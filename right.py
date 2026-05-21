@@ -52,7 +52,10 @@ class RightVendoGUI(ctk.CTk):
         try:
             self.btn = Button(BTN_PIN, pull_up=True, bounce_time=0.1)
             self.btn.when_pressed = self.on_button_press
-        except:
+            print(f"[{SIDE_NAME}] Button ready on GPIO {BTN_PIN}.")
+        except Exception as e:
+            self.btn = None
+            print(f"[{SIDE_NAME} BUTTON ERROR] GPIO {BTN_PIN} unavailable: {e}")
             self.bind('<Button-1>', lambda e: self.on_button_press())
             
         self.bind('<Escape>', self.close_app)
@@ -189,6 +192,8 @@ class RightVendoGUI(ctk.CTk):
         self.is_processing = False
 
     def close_app(self, event=None):
+        if self.btn:
+            self.btn.close()
         self.destroy()
         sys.exit(0)
 
