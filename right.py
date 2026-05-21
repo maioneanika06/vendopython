@@ -1,6 +1,4 @@
 import os
-
-from left import LeftVendoApp
 os.environ["QT_QPA_PLATFORM"] = "xcb" 
 
 import cv2
@@ -19,7 +17,7 @@ from pyzbar.pyzbar import decode
 import hardware
 import config
 from gui import VendoUI
-from modules.database import fetch_attendee, get_active_event_name, get_available_slot
+from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot
 
 SIDE_NAME = "RIGHT"
 CAM_INDEX = 2
@@ -118,7 +116,7 @@ class RightVendoGUI(ctk.CTk):
                 self.cleanup_and_reset()
                 return
 
-            self.safe_update_ui("Verifying QR Code, please wait...", config.COLORS["warning"])
+            self.safe_update_ui("VERIFYING", "Verifying QR Code, please wait...", config.COLORS["warning"])
             user_data = fetch_attendee(qr_id)
             
             if not user_data or 'face_encoding' not in user_data:
@@ -156,18 +154,24 @@ class RightVendoGUI(ctk.CTk):
                 self.cleanup_and_reset()
                 return
 
-            self.safe_update_ui("Face Verification Complete", config.COLORS["success"])
+            self.safe_update_ui("FACE MATCHED", "Face Verification Complete", config.COLORS["success"])
             time.sleep(1.5)
 
-            target_slot = get_available_slot(user_type)
+            target_slot = get_available_slot(user_type, SIDE_NAME)
             if not target_slot:
                 self.safe_update_ui("OUT OF STOCK", f"No items left for {user_type.upper()}", config.COLORS["error"])
                 self.cleanup_and_reset()
                 return
 
-            self.safe_update_ui(f"Dropping item from Slot {target_slot}...", config.COLORS["success"])
+            self.safe_update_ui("DISPENSING", f"Dropping item from Slot {target_slot}...", config.COLORS["success"])
             
-            hardware.dispense_item(target_slot)
+            success = hardware.dispense_item(target_slot)
+            if not success:
+                self.safe_update_ui("HARDWARE ERROR", "Item was not confirmed. Please call staff.", config.COLORS["error"])
+                self.cleanup_and_reset()
+                return
+
+            deduct_inventory(target_slot)
             hardware.print_id_sticker(user_name, user_data.get('company', ''))
 
             time.sleep(4)

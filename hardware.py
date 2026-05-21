@@ -17,13 +17,34 @@ except Exception as e:
 # ?? DISPENSE LOGIC
 # ==========================================
 def dispense_item(target_slot):
-    """Nagpapadala ng numero sa Arduino para paikutin ang motor"""
-    if arduino:
+    """Nagpapadala ng numero sa Arduino at naghihintay ng DONE confirmation."""
+    if not arduino:
+        print(f"[HARDWARE ERROR] Arduino not connected. Cannot confirm Slot {target_slot}.")
+        return False
+
+    try:
         command = f"{target_slot}\n"
+        arduino.reset_input_buffer()
         arduino.write(command.encode('utf-8'))
+        arduino.flush()
         print(f"[HARDWARE] Command sent: Dispensing Slot {target_slot}")
-    else:
-        print(f"[HARDWARE SIMULATION] Arduino not connected. Supposed to drop Slot {target_slot}.")
+
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            line = arduino.readline().decode('utf-8', errors='ignore').strip()
+            if not line:
+                continue
+
+            print(f"[HARDWARE] Arduino replied: {line}")
+            if line == "DONE":
+                print(f"[HARDWARE] Dispense confirmed for Slot {target_slot}.")
+                return True
+
+        print(f"[HARDWARE ERROR] Timeout waiting for DONE from Arduino.")
+        return False
+    except Exception as e:
+        print(f"[HARDWARE ERROR] Dispense failed: {e}")
+        return False
 
 # ==========================================
 # ??? PRINTER LOGIC
