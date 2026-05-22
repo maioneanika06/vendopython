@@ -6,10 +6,10 @@ KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpq
 supabase = create_client(URL, KEY)
 
 def normalize_inventory_role(role):
-    role = str(role or "Attendee").strip()
-    if role.upper() == "VIP":
-        return "VIP"
-    return role.capitalize()
+    role = str(role or "attendee").strip().lower()
+    if role in ("vip", "speaker"):
+        return role
+    return "attendee"
 
 def fetch_attendee(search_id):
     try:
