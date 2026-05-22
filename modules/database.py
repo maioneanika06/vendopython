@@ -13,8 +13,17 @@ def normalize_inventory_role(role):
 
 def fetch_attendee(search_id):
     try:
-        # Kinukuha ang data sa 'attendees' table gamit ang QR code
-        response = supabase.table('attendees').select('*').eq('id', search_id).execute()
+        active_event_id = get_active_event_id()
+        if not active_event_id:
+            print("[ATTENDEE] QR rejected. No ACTIVE event found.")
+            return None
+
+        # QR is valid only for the event that is active right now.
+        response = supabase.table('attendees') \
+            .select('*') \
+            .eq('id', search_id) \
+            .eq('event_id', active_event_id) \
+            .execute()
         
         if len(response.data) > 0:
             return response.data[0] # Ibabalik nito ang buong row ng attendee
@@ -41,6 +50,9 @@ def get_active_event_id():
     except Exception as e:
         print(f"[DB ERROR] Could not fetch active event id: {e}")
         return None
+
+def is_active_event(event_id):
+    return bool(event_id) and event_id == get_active_event_id()
 
 # ITO ANG IDINAGDAG NATIN PARA SA INVENTORY SLOTS (1 hanggang 6)
 def get_available_slot(user_type, side_name):
@@ -118,9 +130,15 @@ def deduct_inventory(slot_number):
 
 def mark_attendee_claimed(attendee_id):
     try:
+        active_event_id = get_active_event_id()
+        if not active_event_id:
+            print("[CLAIM] Claim rejected. No ACTIVE event found.")
+            return False
+
         response = supabase.table('attendees') \
             .update({'claimed_status': 'Claimed'}) \
             .eq('id', attendee_id) \
+            .eq('event_id', active_event_id) \
             .execute()
 
         if response.data:

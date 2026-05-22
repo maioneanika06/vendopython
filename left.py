@@ -17,7 +17,7 @@ from pyzbar.pyzbar import decode
 import hardware
 import config
 from gui import VendoUI
-from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot, mark_attendee_claimed, normalize_inventory_role
+from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot, is_active_event, mark_attendee_claimed, normalize_inventory_role
 
 SIDE_NAME = "LEFT"
 CAM_INDEX = 2
@@ -128,7 +128,7 @@ class LeftVendoGUI(ctk.CTk):
             user_data = fetch_attendee(qr_id)
             
             if not user_data or 'face_encoding' not in user_data:
-                self.safe_update_ui("ERROR", "Invalid QR or Face Data missing", config.COLORS["error"])
+                self.safe_update_ui("INVALID QR", "QR is not valid for the active event.", config.COLORS["error"])
                 self.cleanup_and_reset()
                 return
 
@@ -169,6 +169,11 @@ class LeftVendoGUI(ctk.CTk):
 
             self.safe_update_ui("FACE MATCHED", "Face Verification Complete", config.COLORS["success"])
             time.sleep(1.5)
+
+            if not is_active_event(user_data.get('event_id')):
+                self.safe_update_ui("EVENT ENDED", "This event is no longer active.", config.COLORS["error"])
+                self.cleanup_and_reset()
+                return
 
             target_slot = get_available_slot(user_type, SIDE_NAME)
             if not target_slot:
