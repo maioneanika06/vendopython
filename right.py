@@ -20,8 +20,8 @@ from gui import VendoUI
 from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot, is_active_event, mark_attendee_claimed, normalize_inventory_role
 
 SIDE_NAME = "RIGHT"
-CAM_INDEX = 2
-BTN_PIN = 22
+CAM_INDEX = 0
+BTN_PIN = 23
 X_POSITION = 1024
 
 
