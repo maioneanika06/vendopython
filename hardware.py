@@ -69,7 +69,12 @@ def print_id_sticker(user_name, company_name):
     print(f"[PRINTER] Printing sticker for {user_name}...")
     
     try:
-        with printer_lock():
+        # The lock file closes on every return path and releases flock on Linux.
+        with PRINTER_LOCK_PATH.open('a+') as lock_file:
+            if fcntl:
+                print("[PRINTER] Waiting for sticker printer lock...")
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+
             print("[PRINTER] Looking for USB sticker printer 2e3c:5750...")
             printer_dev = usb.core.find(idVendor=0x2e3c, idProduct=0x5750)
             if not printer_dev:
