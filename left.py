@@ -68,6 +68,7 @@ class LeftVendoGUI(ctk.CTk):
     def safe_set_camera_state(self, is_active):
         def toggle_cam():
             self.camera_active = is_active
+            self.current_frame = None
             if is_active:
                 self.ui.show_active_view()  # Show camera and status when active
                 self.cap = cv2.VideoCapture(CAM_INDEX)
@@ -124,6 +125,7 @@ class LeftVendoGUI(ctk.CTk):
                 self.cleanup_and_reset()
                 return
 
+            print(f"[{SIDE_NAME}] QR detected: {qr_id}")
             self.safe_update_ui("VERIFYING", "Verifying QR Code, please wait...", config.COLORS["warning"])
             user_data = fetch_attendee(qr_id)
             
@@ -140,6 +142,7 @@ class LeftVendoGUI(ctk.CTk):
             user_name = user_data.get('full_name', 'Attendee').upper()
             user_type = normalize_inventory_role(user_data.get('role', 'Attendee'))
             registered_encoding = np.array(user_data['face_encoding'])
+            print(f"[{SIDE_NAME}] QR attendee: id={user_data.get('id')} name={user_name}")
             
             self.safe_update_ui("Welcome", f"{user_name}!", config.COLORS["success"])
             time.sleep(1.5)
