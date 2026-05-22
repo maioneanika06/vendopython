@@ -9,11 +9,7 @@ try:
     import fcntl
 except ImportError:
     fcntl = None
-# from escpos.printer import Usb  # ?? Tanggalin ang '#' kung gamit niyo ay standard ESC/POS USB Printer
 
-# ==========================================
-# ?? ARDUINO CONNECTION
-# ==========================================
 ARDUINO_PORT = '/dev/ttyACM0'
 ARDUINO_BAUDRATE = 9600
 ARDUINO_LOCK_PATH = Path('/tmp/vendy_arduino.lock')
@@ -29,7 +25,7 @@ def arduino_connection():
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
 
         arduino = serial.Serial(ARDUINO_PORT, ARDUINO_BAUDRATE, timeout=1)
-        time.sleep(2) # Opening serial can reset the Arduino.
+        time.sleep(2) 
         arduino.reset_input_buffer()
         print("[HARDWARE] Arduino Connected Successfully.")
         yield arduino
@@ -40,17 +36,14 @@ def arduino_connection():
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
         lock_file.close()
 
-# ==========================================
-# ?? DISPENSE LOGIC
-# ==========================================
+#for dispensing item
 def dispense_item(target_slot):
-    """Nagpapadala ng numero sa Arduino at naghihintay ng DONE confirmation."""
     try:
         with arduino_connection() as arduino:
             command = f"{target_slot}\n"
             arduino.write(command.encode('utf-8'))
             arduino.flush()
-            print(f"[HARDWARE] Command sent: Dispensing Slot {target_slot}")
+            print(f"Command sent: Dispensing Slot {target_slot}")
 
             deadline = time.monotonic() + 10
             while time.monotonic() < deadline:
@@ -58,9 +51,9 @@ def dispense_item(target_slot):
                 if not line:
                     continue
 
-                print(f"[HARDWARE] Arduino replied: {line}")
+                print(f"Arduino replied: {line}")
                 if line == "DONE":
-                    print(f"[HARDWARE] Dispense confirmed for Slot {target_slot}.")
+                    print(f"Dispense confirmed for Slot {target_slot}.")
                     return True
 
             print(f"[HARDWARE ERROR] Timeout waiting for DONE from Arduino.")
@@ -69,11 +62,7 @@ def dispense_item(target_slot):
         print(f"[HARDWARE ERROR] Dispense failed: {e}")
         return False
 
-# ==========================================
-# ??? PRINTER LOGIC
-# ==========================================
 def print_id_sticker(user_name, company_name):
-    """Mag-print ng ID Sticker gamit ang Thermal Printer"""
     print(f"[PRINTER] Printing sticker for {user_name}...")
     
     try:
@@ -120,5 +109,5 @@ def print_id_sticker(user_name, company_name):
         return True
 
     except Exception as e:
-        print(f"[PRINTER ERROR] Hindi makapag-print: {e}")
+        print(f"[PRINTER ERROR] {e}")
         return False

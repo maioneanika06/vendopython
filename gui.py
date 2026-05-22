@@ -6,24 +6,22 @@ class VendoUI(ctk.CTkFrame):
         super().__init__(master, fg_color=config.COLORS["bg"])
         self.pack(fill="both", expand=True)
         
-        # Main container for all views
+        #main container for all views
         self.main_container = ctk.CTkFrame(self, fg_color="transparent")
         self.main_container.pack(fill="both", expand=True)
         
-        # Create Idle View
+        # create Idle View
         self.idle_view = self._create_idle_view()
         
-        # Create Active View
+        #create Active View
         self.active_view = self._create_active_view()
         
-        # Start in Idle state
+        #start in Idle state
         self.show_idle_view()
     
     def _create_idle_view(self):
-        """Creates the beautiful centered Idle/Standby View"""
         idle_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         
-        # --- EVENT NAME LABEL (Dito natin nilagyan ng self.) ---
         self.event_label = ctk.CTkLabel(
             idle_frame,
             text=f"{config.EVENT_NAME}",
@@ -32,7 +30,6 @@ class VendoUI(ctk.CTkFrame):
         )
         self.event_label.pack(pady=(80, 40))
         
-        # --- WELCOME TEXT (Huge, centered) ---
         welcome_label = ctk.CTkLabel(
             idle_frame,
             text="WELCOME",
@@ -41,7 +38,6 @@ class VendoUI(ctk.CTkFrame):
         )
         welcome_label.pack(pady=(20, 0))
         
-        # --- SUBTEXT ---
         subtext_label = ctk.CTkLabel(
             idle_frame,
             text="Please press the button to start",
@@ -54,7 +50,6 @@ class VendoUI(ctk.CTkFrame):
     
 
     def _create_active_view(self):
-        """Creates the Active View with camera and status indicators"""
         active_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         
         # --- TOP STATUS SECTION ---
@@ -77,7 +72,6 @@ class VendoUI(ctk.CTkFrame):
         )
         self.msg_label.pack(pady=(5, 0))
 
-        # --- CAMERA CARD SECTION ---
         self.card_frame = ctk.CTkFrame(
             active_frame, 
             fg_color=config.COLORS["card"], 
@@ -101,36 +95,22 @@ class VendoUI(ctk.CTkFrame):
         return active_frame
     
     def show_idle_view(self):
-        """Displays the Idle View and hides Active View"""
-        # Hide active view
         self.active_view.pack_forget()
-        # Show idle view
         self.idle_view.pack(fill="both", expand=True)
     
     def show_active_view(self):
-        """Displays the Active View and hides Idle View"""
-        # Hide idle view
         self.idle_view.pack_forget()
-        # Show active view
         self.active_view.pack(fill="both", expand=True)
     
-    # ==================================================
-    # ??? MGA FUNCTIONS PARA MA-CONTROL NG MAIN CODE
-    # ==================================================
-    
     def update_event_name(self, new_name):
-        """Update ang pangalan ng event mula sa Database"""
         self.event_label.configure(text=f"{new_name}")
 
     def update_texts(self, status, msg, color):
-        """Update status and message text in Active View"""
         self.status_label.configure(text=status, text_color=color)
         self.msg_label.configure(text=msg)
 
     def update_camera_image(self, ctk_image):
-        """Display camera feed"""
         self.video_label.configure(image=ctk_image, text="")
 
     def set_camera_off(self, blank_image):
-        """Display inactive camera screen"""
         self.video_label.configure(image=blank_image, text="CAMERA INACTIVE")

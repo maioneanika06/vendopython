@@ -1,13 +1,8 @@
-# config.py
 
-# ==========================================
-# ?? GLOBAL SETTINGS
-# ==========================================
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 768
 EVENT_NAME = "Connecting to database.."
 
-# --- VENDY WEB APP THEME ---
 COLORS = {
     "bg": "#0B0910",          # Deep dark background
     "card": "#15111E",        # Slightly lighter purple-gray for the camera card

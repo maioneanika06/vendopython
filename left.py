@@ -195,7 +195,7 @@ class LeftVendoGUI(ctk.CTk):
             print(f"[{SIDE_NAME}] Sticker print success: {print_success}")
 
             time.sleep(4)
-            self.safe_update_ui("SUCCESS", "Thank you! Please claim your item below.", config.COLORS["success"])
+            self.safe_update_ui("SUCCESS", "Thank you! Please claim your item and ID below.", config.COLORS["success"])
             self.cleanup_and_reset()
 
         except Exception as e:
@@ -205,7 +205,7 @@ class LeftVendoGUI(ctk.CTk):
     def cleanup_and_reset(self):
         self.safe_set_camera_state(False)
         time.sleep(1)
-        self.ui.show_idle_view()  # Return to beautiful Idle View
+        self.ui.show_idle_view() 
         self.is_processing = False
 
     def close_app(self, event=None):
