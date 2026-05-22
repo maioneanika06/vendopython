@@ -131,6 +131,11 @@ class LeftVendoGUI(ctk.CTk):
                 self.safe_update_ui("ERROR", "Invalid QR or Face Data missing", config.COLORS["error"])
                 self.cleanup_and_reset()
                 return
+
+            if user_data.get('claimed_status') == 'Claimed':
+                self.safe_update_ui("ALREADY CLAIMED", "This QR code already claimed a kit.", config.COLORS["warning"])
+                self.cleanup_and_reset()
+                return
                 
             user_name = user_data.get('full_name', 'Attendee').upper()
             user_type = normalize_inventory_role(user_data.get('role', 'Attendee'))
