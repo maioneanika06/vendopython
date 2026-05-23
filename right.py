@@ -5,9 +5,6 @@ import cv2
 import face_recognition
 import numpy as np
 import time
-import serial
-import usb.core
-import usb.util
 import sys
 import threading
 import customtkinter as ctk
@@ -18,6 +15,7 @@ import hardware
 import config
 from gui import VendoUI
 from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot, is_active_event, mark_attendee_claimed, normalize_inventory_role
+from printer_queue import enqueue_print_job
 
 SIDE_NAME = "RIGHT"
 CAM_INDEX = 0
@@ -194,8 +192,13 @@ class RightVendoGUI(ctk.CTk):
 
             deduct_inventory(target_slot)
             mark_attendee_claimed(user_data['id'])
-            print_success = hardware.print_id_sticker(user_name, user_data.get('company', ''))
-            print(f"[{SIDE_NAME}] Sticker print success: {print_success}")
+            print_job_id = enqueue_print_job(
+                SIDE_NAME,
+                user_data.get('id'),
+                user_name,
+                user_data.get('company', ''),
+            )
+            print(f"[{SIDE_NAME}] Sticker print queued: {print_job_id}")
 
             time.sleep(4)
             self.safe_update_ui("SUCCESS", "Thank you! Please claim your item and ID below.", config.COLORS["success"])
