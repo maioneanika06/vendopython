@@ -13,6 +13,10 @@ except ImportError:
 ARDUINO_PORT = '/dev/ttyACM0'
 ARDUINO_BAUDRATE = 9600
 ARDUINO_LOCK_PATH = Path('/tmp/vendy_arduino.lock')
+RAW_PRINTER_PATHS = (
+    Path('/dev/usb/lp0'),
+    Path('/dev/usb/lp1'),
+)
 
 @contextmanager
 def arduino_connection():
@@ -71,6 +75,15 @@ def print_id_sticker(user_name, company_name):
     print(f"[PRINTER] Printing sticker for {user_name}...")
     
     try:
+        safe_name = clean_sticker_text(user_name or "Attendee")[:18]
+        safe_company = clean_sticker_text(company_name or "N/A")[:18]
+        tspl_cmd = build_sticker_command(safe_name, safe_company)
+
+        print(f"[PRINTER] Sending sticker data: name='{safe_name}', company='{safe_company}'")
+        if send_raw_printer(tspl_cmd):
+            return True
+
+        print("[PRINTER] Raw printer device unavailable. Falling back to PyUSB.")
         print("[PRINTER] Looking for USB sticker printer 2e3c:5750...")
         printer_dev = usb.core.find(idVendor=0x2e3c, idProduct=0x5750)
         if not printer_dev:
@@ -94,22 +107,8 @@ def print_id_sticker(user_name, company_name):
             print("[PRINTER ERROR] Printer USB OUT endpoint not found.")
             return False
 
-        safe_name = clean_sticker_text(user_name or "Attendee")[:18]
-        safe_company = clean_sticker_text(company_name or "N/A")[:18]
-        tspl_cmd = (
-            "\r\n"
-            "SIZE 40 mm,30 mm\r\n"
-            "GAP 2 mm,0 mm\r\n"
-            "DIRECTION 0\r\n"
-            "CLS\r\n"
-            f'TEXT 20,40,"2",0,1,1,"{safe_name}"\r\n'
-            f'TEXT 20,110,"2",0,1,1,"{safe_company}"\r\n'
-            "PRINT 1\r\n"
-        )
-
-        print(f"[PRINTER] Sending sticker data: name='{safe_name}', company='{safe_company}'")
-        bytes_written = endpoint.write(tspl_cmd.encode('utf-8'))
-        time.sleep(0.2)
+        bytes_written = endpoint.write(tspl_cmd)
+        time.sleep(0.5)
         usb.util.dispose_resources(printer_dev)
         print(f"[PRINTER] Sticker print command sent ({bytes_written} bytes).")
         return True
@@ -121,3 +120,33 @@ def print_id_sticker(user_name, company_name):
 def clean_sticker_text(value):
     """Keep TSPL text fields on one command line and inside their quotes."""
     return str(value).replace('"', "'").replace('\r', ' ').replace('\n', ' ').strip()
+
+def build_sticker_command(safe_name, safe_company):
+    # Start with CR/LF and CLS so the printer does not repeat its previous label buffer.
+    return (
+        "\r\n"
+        "SIZE 40 mm,30 mm\r\n"
+        "GAP 2 mm,0 mm\r\n"
+        "DIRECTION 0\r\n"
+        "CLS\r\n"
+        f'TEXT 20,40,"2",0,1,1,"{safe_name}"\r\n'
+        f'TEXT 20,110,"2",0,1,1,"{safe_company}"\r\n'
+        "PRINT 1\r\n"
+    ).encode('utf-8')
+
+def send_raw_printer(tspl_cmd):
+    for printer_path in RAW_PRINTER_PATHS:
+        if not printer_path.exists():
+            continue
+
+        try:
+            with printer_path.open('wb', buffering=0) as printer_file:
+                printer_file.write(tspl_cmd)
+                printer_file.flush()
+            time.sleep(0.5)
+            print(f"[PRINTER] Sticker print command sent through {printer_path}.")
+            return True
+        except Exception as e:
+            print(f"[PRINTER] Could not write to {printer_path}: {e}")
+
+    return False
