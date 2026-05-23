@@ -5,13 +5,14 @@ from uuid import uuid4
 
 PRINT_QUEUE_DIR = Path('/tmp/vendy_print_queue')
 
-def enqueue_print_job(side_name, attendee_id, user_name, company_name):
+def enqueue_print_job(side_name, attendee_id, user_name, company_name, event_id=None):
     PRINT_QUEUE_DIR.mkdir(parents=True, exist_ok=True)
 
     job = {
         'id': uuid4().hex,
         'created_at': time.time(),
         'side': side_name,
+        'event_id': event_id,
         'attendee_id': attendee_id,
         'user_name': str(user_name or 'Attendee'),
         'company_name': str(company_name or 'N/A'),
@@ -24,6 +25,6 @@ def enqueue_print_job(side_name, attendee_id, user_name, company_name):
 
     print(
         f"[PRINT QUEUE] Queued job {job['id']} "
-        f"side={side_name} attendee={attendee_id} name={job['user_name']}"
+        f"side={side_name} event={event_id} attendee={attendee_id} name={job['user_name']}"
     )
     return job['id']

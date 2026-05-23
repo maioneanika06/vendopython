@@ -197,6 +197,7 @@ class LeftVendoGUI(ctk.CTk):
                 user_data.get('id'),
                 user_name,
                 user_data.get('company', ''),
+                user_data.get('event_id'),
             )
             print(f"[{SIDE_NAME}] Sticker print queued: {print_job_id}")
 

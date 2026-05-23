@@ -6,6 +6,7 @@ from printer_queue import PRINT_QUEUE_DIR
 
 DONE_DIR = PRINT_QUEUE_DIR / 'done'
 FAILED_DIR = PRINT_QUEUE_DIR / 'failed'
+STALE_DIR = PRINT_QUEUE_DIR / 'stale'
 
 def read_job(path):
     return json.loads(path.read_text(encoding='utf-8'))
@@ -28,11 +29,27 @@ def claim_next_job():
     except FileNotFoundError:
         return None
 
+def discard_startup_jobs():
+    PRINT_QUEUE_DIR.mkdir(parents=True, exist_ok=True)
+    STALE_DIR.mkdir(parents=True, exist_ok=True)
+
+    stale_jobs = list(PRINT_QUEUE_DIR.glob('*.json')) + list(PRINT_QUEUE_DIR.glob('*.printing'))
+    if not stale_jobs:
+        return
+
+    print(f"[PRINT WORKER] Discarding {len(stale_jobs)} stale pending print job(s).")
+    for path in stale_jobs:
+        try:
+            path.replace(STALE_DIR / path.name)
+            print(f"[PRINT WORKER] Stale job moved: {path.name}")
+        except FileNotFoundError:
+            pass
+
 def process_job(path):
     job = read_job(path)
     print(
         f"[PRINT WORKER] Printing job {job.get('id')} "
-        f"side={job.get('side')} attendee={job.get('attendee_id')} "
+        f"side={job.get('side')} event={job.get('event_id')} attendee={job.get('attendee_id')} "
         f"name={job.get('user_name')}"
     )
 
@@ -50,6 +67,7 @@ def process_job(path):
 
 def main():
     print("[PRINT WORKER] Started.")
+    discard_startup_jobs()
     while True:
         job_path = claim_next_job()
         if not job_path:
