@@ -1,5 +1,6 @@
 import json
 import time
+from pathlib import Path
 
 import hardware
 from printer_queue import PRINT_QUEUE_DIR
@@ -7,6 +8,12 @@ from printer_queue import PRINT_QUEUE_DIR
 DONE_DIR = PRINT_QUEUE_DIR / 'done'
 FAILED_DIR = PRINT_QUEUE_DIR / 'failed'
 STALE_DIR = PRINT_QUEUE_DIR / 'stale'
+WORKER_LOCK_PATH = Path('/tmp/vendy_printer_worker.lock')
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
 
 def read_job(path):
     return json.loads(path.read_text(encoding='utf-8'))
@@ -66,22 +73,35 @@ def process_job(path):
         print(f"[PRINT WORKER] Failed job {job.get('id')}")
 
 def main():
+    lock_file = WORKER_LOCK_PATH.open('a+')
+    if fcntl:
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("[PRINT WORKER] Another printer worker is already running. Exiting.")
+            return
+
     print("[PRINT WORKER] Started.")
     discard_startup_jobs()
-    while True:
-        job_path = claim_next_job()
-        if not job_path:
-            time.sleep(0.2)
-            continue
+    try:
+        while True:
+            job_path = claim_next_job()
+            if not job_path:
+                time.sleep(0.2)
+                continue
 
-        try:
-            process_job(job_path)
-        except Exception as e:
-            print(f"[PRINT WORKER ERROR] {e}")
             try:
-                move_finished(job_path, FAILED_DIR)
-            except Exception:
-                pass
+                process_job(job_path)
+            except Exception as e:
+                print(f"[PRINT WORKER ERROR] {e}")
+                try:
+                    move_finished(job_path, FAILED_DIR)
+                except Exception:
+                    pass
+    finally:
+        if fcntl:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+        lock_file.close()
 
 if __name__ == "__main__":
     main()

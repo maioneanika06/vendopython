@@ -77,7 +77,7 @@ def print_id_sticker(user_name, company_name):
     try:
         safe_name = clean_sticker_text(user_name or "Attendee")[:18]
         safe_company = clean_sticker_text(company_name or "N/A")[:18]
-        tspl_cmd = build_printer_clear_command() + build_sticker_command(safe_name, safe_company)
+        tspl_cmd = build_sticker_command(safe_name, safe_company)
 
         print(f"[PRINTER] Sending sticker data: name='{safe_name}', company='{safe_company}'")
         if send_raw_printer(tspl_cmd):
@@ -122,19 +122,34 @@ def clean_sticker_text(value):
     return str(value).replace('"', "'").replace('\r', ' ').replace('\n', ' ').strip()
 
 def build_sticker_command(safe_name, safe_company):
-    # Start with CR/LF and CLS so the printer does not repeat its previous label buffer.
+    # FORMFEED first moves away from a label that already has black thermal marks.
+    # CLS clears the printer image buffer before drawing this exact label.
     return (
+        "\r\n"
+        "FORMFEED\r\n"
         "SIZE 40 mm,30 mm\r\n"
         "GAP 2 mm,0 mm\r\n"
+        "DENSITY 8\r\n"
+        "SPEED 3\r\n"
         "DIRECTION 0\r\n"
+        "REFERENCE 0,0\r\n"
+        "CLS\r\n"
+        "PRINT 0\r\n"
+        "CLS\r\n"
+        "SIZE 40 mm,30 mm\r\n"
+        "GAP 2 mm,0 mm\r\n"
+        "DENSITY 8\r\n"
+        "SPEED 3\r\n"
+        "DIRECTION 0\r\n"
+        "REFERENCE 0,0\r\n"
         "CLS\r\n"
         f'TEXT 20,40,"2",0,1,1,"{safe_name}"\r\n'
         f'TEXT 20,110,"2",0,1,1,"{safe_company}"\r\n'
-        "PRINT 1\r\n"
+        "PRINT 1,1\r\n"
     ).encode('utf-8')
 
 def build_printer_clear_command():
-    return b"\r\nCLS\r\n"
+    return b"\r\nCLS\r\nFORMFEED\r\n"
 
 def send_raw_printer(tspl_cmd):
     for printer_path in RAW_PRINTER_PATHS:
