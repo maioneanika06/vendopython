@@ -69,6 +69,10 @@ class LeftVendoGUI(ctk.CTk):
             if is_active:
                 self.ui.show_active_view()  # Show camera and status when active
                 self.cap = cv2.VideoCapture(CAM_INDEX)
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                self.cap.set(cv2.CAP_PROP_FPS, 15)
+                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             else:
                 if self.cap:
                     self.cap.release()

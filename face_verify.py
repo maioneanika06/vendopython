@@ -4,10 +4,13 @@ import cv2
 import face_recognition
 import numpy as np
 
-FACE_MATCH_TOLERANCE = 0.42
-REQUIRED_CONSECUTIVE_MATCHES = 3
-REQUIRED_CONSECUTIVE_MISMATCHES = 5
+FACE_MATCH_TOLERANCE = 0.50
+FACE_MISMATCH_TOLERANCE = 0.62
+REQUIRED_CONSECUTIVE_MATCHES = 2
+REQUIRED_CONSECUTIVE_MISMATCHES = 4
 FACE_SCAN_TIMEOUT = 20
+FACE_PROCESS_INTERVAL = 0.18
+FACE_RESIZE_SCALE = 0.35
 
 def normalize_registered_encoding(raw_encoding):
     encoding = np.asarray(raw_encoding, dtype=np.float64)
@@ -20,15 +23,27 @@ def verify_face(get_current_frame, registered_encoding, side_name):
     consecutive_mismatches = 0
     best_distance = None
     start_time = time.time()
+    next_process_time = 0
 
     while time.time() - start_time < FACE_SCAN_TIMEOUT:
+        now = time.time()
+        if now < next_process_time:
+            time.sleep(0.02)
+            continue
+        next_process_time = now + FACE_PROCESS_INTERVAL
+
         frame = get_current_frame()
         if frame is None:
             time.sleep(0.03)
             continue
 
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        small_frame = cv2.resize(rgb_frame, (0, 0), fx=0.5, fy=0.5)
+        small_frame = cv2.resize(
+            rgb_frame,
+            (0, 0),
+            fx=FACE_RESIZE_SCALE,
+            fy=FACE_RESIZE_SCALE,
+        )
         face_locs = face_recognition.face_locations(small_frame, model="hog")
         face_encs = face_recognition.face_encodings(small_frame, face_locs)
 
@@ -49,12 +64,15 @@ def verify_face(get_current_frame, registered_encoding, side_name):
             if consecutive_matches >= REQUIRED_CONSECUTIVE_MATCHES:
                 print(f"[{side_name}] Face verified with distance {distance:.3f}.")
                 return "matched"
-        else:
+        elif distance >= FACE_MISMATCH_TOLERANCE:
             consecutive_matches = 0
             consecutive_mismatches += 1
             if consecutive_mismatches >= REQUIRED_CONSECUTIVE_MISMATCHES:
                 print(f"[{side_name}] Face mismatch. Best distance: {best_distance:.3f}.")
                 return "mismatch"
+        else:
+            consecutive_matches = 0
+            consecutive_mismatches = 0
 
     if best_distance is None:
         print(f"[{side_name}] Face verification failed: no usable face detected.")
