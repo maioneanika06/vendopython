@@ -2,8 +2,6 @@ import os
 os.environ["QT_QPA_PLATFORM"] = "xcb" 
 
 import cv2
-import face_recognition
-import numpy as np
 import time
 import sys
 import threading
@@ -13,6 +11,7 @@ from gpiozero import Button
 from pyzbar.pyzbar import decode
 import hardware
 import config
+from face_verify import normalize_registered_encoding, verify_face
 from gui import VendoUI
 from modules.database import deduct_inventory, fetch_attendee, get_active_event_name, get_available_slot, is_active_event, mark_attendee_claimed, normalize_inventory_role
 from printer_queue import enqueue_print_job
@@ -139,29 +138,22 @@ class RightVendoGUI(ctk.CTk):
                 
             user_name = user_data.get('full_name', 'Attendee').upper()
             user_type = normalize_inventory_role(user_data.get('role', 'Attendee'))
-            registered_encoding = np.array(user_data['face_encoding'])
+            try:
+                registered_encoding = normalize_registered_encoding(user_data['face_encoding'])
+            except ValueError as e:
+                print(f"[{SIDE_NAME}] Invalid registered face encoding: {e}")
+                self.safe_update_ui("FACE DATA ERROR", "Stored face data is invalid.", config.COLORS["error"])
+                self.cleanup_and_reset()
+                return
             print(f"[{SIDE_NAME}] QR attendee: id={user_data.get('id')} name={user_name}")
             
             self.safe_update_ui("Welcome", f"{user_name}!", config.COLORS["success"])
             time.sleep(1.5)
             
             self.safe_update_ui("FACE SCAN", "Please look directly at the camera", config.COLORS["scan"])
-            face_matched = False
-            start_time = time.time()
-            
-            while time.time() - start_time < 60:
-                if self.current_frame is not None:
-                    rgb_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB)
-                    small_frame = cv2.resize(rgb_frame, (0, 0), fx=0.5, fy=0.5)
-                    face_locs = face_recognition.face_locations(small_frame)
-                    face_encs = face_recognition.face_encodings(small_frame, face_locs)
-                    
-                    for enc in face_encs:
-                        match = face_recognition.compare_faces([registered_encoding], enc, tolerance=0.5)
-                        if True in match:
-                            face_matched = True
-                            break
-                    if face_matched: break
+            self.current_frame = None
+            time.sleep(0.2)
+            face_matched = verify_face(lambda: self.current_frame, registered_encoding, SIDE_NAME)
 
             if not face_matched:
                 self.safe_update_ui("ERROR", "Face verification failed!", config.COLORS["error"])
