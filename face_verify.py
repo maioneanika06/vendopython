@@ -6,6 +6,7 @@ import numpy as np
 
 FACE_MATCH_TOLERANCE = 0.42
 REQUIRED_CONSECUTIVE_MATCHES = 3
+REQUIRED_CONSECUTIVE_MISMATCHES = 5
 FACE_SCAN_TIMEOUT = 20
 
 def normalize_registered_encoding(raw_encoding):
@@ -16,6 +17,7 @@ def normalize_registered_encoding(raw_encoding):
 
 def verify_face(get_current_frame, registered_encoding, side_name):
     consecutive_matches = 0
+    consecutive_mismatches = 0
     best_distance = None
     start_time = time.time()
 
@@ -32,6 +34,7 @@ def verify_face(get_current_frame, registered_encoding, side_name):
 
         if len(face_encs) != 1:
             consecutive_matches = 0
+            consecutive_mismatches = 0
             if len(face_encs) > 1:
                 print(f"[{side_name}] Face scan rejected: multiple faces detected.")
             continue
@@ -42,14 +45,20 @@ def verify_face(get_current_frame, registered_encoding, side_name):
 
         if distance <= FACE_MATCH_TOLERANCE:
             consecutive_matches += 1
+            consecutive_mismatches = 0
             if consecutive_matches >= REQUIRED_CONSECUTIVE_MATCHES:
                 print(f"[{side_name}] Face verified with distance {distance:.3f}.")
-                return True
+                return "matched"
         else:
             consecutive_matches = 0
+            consecutive_mismatches += 1
+            if consecutive_mismatches >= REQUIRED_CONSECUTIVE_MISMATCHES:
+                print(f"[{side_name}] Face mismatch. Best distance: {best_distance:.3f}.")
+                return "mismatch"
 
     if best_distance is None:
         print(f"[{side_name}] Face verification failed: no usable face detected.")
+        return "no_face"
     else:
         print(f"[{side_name}] Face verification failed. Best distance: {best_distance:.3f}.")
-    return False
+        return "timeout"

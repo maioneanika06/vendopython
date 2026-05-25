@@ -153,10 +153,15 @@ class LeftVendoGUI(ctk.CTk):
             self.safe_update_ui("FACE SCAN", "Please look directly at the camera", config.COLORS["scan"])
             self.current_frame = None
             time.sleep(0.2)
-            face_matched = verify_face(lambda: self.current_frame, registered_encoding, SIDE_NAME)
+            face_status = verify_face(lambda: self.current_frame, registered_encoding, SIDE_NAME)
 
-            if not face_matched:
-                self.safe_update_ui("ERROR", "Face verification failed!", config.COLORS["error"])
+            if face_status != "matched":
+                if face_status == "mismatch":
+                    self.safe_update_ui("FACE MISMATCH", "Face does not match this QR.", config.COLORS["error"])
+                elif face_status == "no_face":
+                    self.safe_update_ui("NO FACE DETECTED", "Please try again.", config.COLORS["error"])
+                else:
+                    self.safe_update_ui("FACE TIMEOUT", "Face verification failed.", config.COLORS["error"])
                 self.cleanup_and_reset()
                 return
 
