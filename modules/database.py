@@ -72,8 +72,7 @@ def get_available_slot(user_type, side_name):
             print(f"[INVENTORY] Unknown side_name: {side_name}")
             return None
 
-        # Hahanapin nito ang slot para sa active event, role, at screen side.
-        # Magbabalik lang ito kapag may stock pa (> 0).
+
         response = supabase.table('inventory') \
             .select('slot_number') \
             .eq('event_id', event_id) \
@@ -152,20 +151,14 @@ def mark_attendee_claimed(attendee_id):
         return False
 
 def get_active_event_name():
-    """
-    Kukuha ng pangalan ng event na naka 'LIVE' o 'ACTIVE' sa Supabase.
-    Kung walang makuha o walang internet, may default fallback text.
-    """
     try:
-        # Palitan mo yung 'events', 'status', 'LIVE', at 'name' depende 
-        # sa totoong pangalan ng mga columns sa Supabase table niyo.
         response = supabase.table('events').select('name').eq('status', 'ACTIVE').execute()
         
         if response.data and len(response.data) > 0:
-            return response.data[0]['name'].upper() # Para laging naka-caps lock sa screen
+            return response.data[0]['name'].upper() 
         else:
-            return "WELCOME TO VENDY" # Fallback kung walang active event
+            return "WELCOME TO VENDY" 
             
     except Exception as e:
         print(f"[DB ERROR] Could not fetch event name: {e}")
-        return "WELCOME TO VENDY" # Fallback kung walang internet
+        return "WELCOME TO VENDY" 
