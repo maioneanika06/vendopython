@@ -6,17 +6,13 @@ class VendoUI(ctk.CTkFrame):
         super().__init__(master, fg_color=config.COLORS["bg"])
         self.pack(fill="both", expand=True)
         
-        #main container for all views
         self.main_container = ctk.CTkFrame(self, fg_color="transparent")
         self.main_container.pack(fill="both", expand=True)
         
-        # create Idle View
         self.idle_view = self._create_idle_view()
         
-        #create Active View
         self.active_view = self._create_active_view()
         
-        #start in Idle state
         self.show_idle_view()
     
     def _create_idle_view(self):
@@ -52,7 +48,6 @@ class VendoUI(ctk.CTkFrame):
     def _create_active_view(self):
         active_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         
-        # --- TOP STATUS SECTION ---
         self.header_frame = ctk.CTkFrame(active_frame, fg_color="transparent")
         self.header_frame.pack(pady=(60, 20))
         

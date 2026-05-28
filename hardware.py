@@ -40,9 +40,6 @@ def arduino_connection():
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
         lock_file.close()
 
-# ==========================================
-# ?? DISPENSE LOGIC
-# ==========================================
 def dispense_item(target_slot):
     try:
         with arduino_connection() as arduino:

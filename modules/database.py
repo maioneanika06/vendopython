@@ -1,6 +1,5 @@
 from supabase import create_client
 
-# Gamitin ang credentials mula sa iyong Supabase project
 URL = "https://zjumaqabzoogpoeadvtn.supabase.co"
 KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqdW1hcWFiem9vZ3BvZWFkdnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwODI0OTIsImV4cCI6MjA5NDY1ODQ5Mn0.L6gfpuC8rHH04RS6sOeSz6EPJqp6xaohRD-lRFkRzZU"
 supabase = create_client(URL, KEY)
